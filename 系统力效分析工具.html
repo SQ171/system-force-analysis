@@ -702,6 +702,8 @@ function processAll() {
     setStatus('请先添加文件', true); return;
   }
 
+  clearTimeout(rangeDebounce);
+  rangeDebounce = null;
   setStatus('正在处理...');
   document.getElementById('controlPanel').style.display = 'block';
 
@@ -859,6 +861,8 @@ function processAll() {
 }
 
 function renderChart(seriesData) {
+  clearTimeout(rangeDebounce);
+  rangeDebounce = null;
   const metricName = getSelectedMetric();
   const isTrend = document.querySelector('input[name="mode"]:checked').value === 'trend';
   const bucketSize = parseInt(document.getElementById('bucketSizeNum').value) || 400;
@@ -970,6 +974,7 @@ function renderChart(seriesData) {
 }
 
 function computeStats(vals) {
+  if (!vals || vals.length === 0) return { min: 0, max: 0, mean: 0, std: 0, count: 0 };
   let minV = Infinity, maxV = -Infinity, sumV = 0;
   for (const v of vals) { if (v < minV) minV = v; if (v > maxV) maxV = v; sumV += v; }
   const meanV = sumV / vals.length;
