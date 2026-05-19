@@ -6,77 +6,188 @@
 <title>系统力效分析工具</title>
 <script src="https://cdn.plot.ly/plotly-3.0.0.min.js"></script>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Microsoft YaHei', 'PingFang SC', 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; min-height: 100vh; }
-  .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
-  h1 { font-size: 22px; margin-bottom: 4px; }
-  .subtitle { color: #888; font-size: 13px; margin-bottom: 16px; }
+  /* ---- Theme variables ---- */
+  :root {
+    --bg: #f0f2f5;
+    --surface: #fff;
+    --surface2: #fafafa;
+    --text: #333;
+    --text2: #555;
+    --text3: #888;
+    --text4: #999;
+    --border: #dcdfe6;
+    --border2: #eee;
+    --divider: #e0e0e0;
+    --primary: #409eff;
+    --primary-hover: #337ecc;
+    --primary-bg: #ecf5ff;
+    --danger: #f56c6c;
+    --danger-bg: #fef0f0;
+    --warning: #e6a23c;
+    --tag-bg: #e8f4fd;
+    --shadow: rgba(0,0,0,0.06);
+    --drop-border: #c0c4cc;
+    --chart-bg: #fff;
+    --legend-bg: rgba(255,255,255,0.85);
+    --legend-border: #ddd;
+    --grid: #eee;
+    --input-bg: #fff;
+    --button-bg: #fff;
+    --button-text: #606266;
+    --radio-accent: #409eff;
+  }
 
+  [data-theme="dark"] {
+    --bg: #0f0f1a;
+    --surface: #1a1a2e;
+    --surface2: #222240;
+    --text: #d8d8e8;
+    --text2: #b0b0c8;
+    --text3: #8888a8;
+    --text4: #707090;
+    --border: #2d2d50;
+    --border2: #282848;
+    --divider: #2d2d50;
+    --primary: #5b9bd5;
+    --primary-hover: #7ab8f0;
+    --primary-bg: #1a3050;
+    --danger: #e05555;
+    --danger-bg: #3e1a1a;
+    --warning: #d4a843;
+    --tag-bg: #1a3a5c;
+    --shadow: rgba(0,0,0,0.4);
+    --drop-border: #3a3a60;
+    --chart-bg: #1a1a2e;
+    --legend-bg: rgba(26,26,46,0.92);
+    --legend-border: #3a3a60;
+    --grid: #2a2a48;
+    --input-bg: #12122a;
+    --button-bg: #1a1a2e;
+    --button-text: #b0b0c8;
+    --radio-accent: #5b9bd5;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Microsoft YaHei', 'PingFang SC', 'Segoe UI', sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh;
+    transition: background 0.3s, color 0.3s;
+  }
+  .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+  /* ---- Header ---- */
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  h1 { font-size: 22px; }
+  .subtitle { color: var(--text3); font-size: 13px; margin-bottom: 16px; }
+
+  /* ---- Theme toggle ---- */
+  #themeToggle {
+    width: 38px; height: 38px; border-radius: 50%;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); cursor: pointer; font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; flex-shrink: 0;
+  }
+  #themeToggle:hover { border-color: var(--primary); color: var(--primary); }
+
+  /* ---- Drop zone ---- */
   #dropZone {
-    border: 2px dashed #c0c4cc; border-radius: 10px; padding: 30px;
-    text-align: center; background: #fff; cursor: pointer;
+    border: 2px dashed var(--drop-border); border-radius: 10px; padding: 30px;
+    text-align: center; background: var(--surface); cursor: pointer;
     transition: all 0.2s; margin-bottom: 12px;
   }
-  #dropZone.drag-over { border-color: #409eff; background: #ecf5ff; }
+  #dropZone.drag-over { border-color: var(--primary); background: var(--primary-bg); }
   #dropZone .icon { font-size: 36px; margin-bottom: 8px; }
-  #dropZone p { color: #999; font-size: 14px; }
-  #dropZone .hint { font-size: 12px; color: #bbb; margin-top: 4px; }
+  #dropZone p { color: var(--text4); font-size: 14px; }
+  #dropZone .hint { font-size: 12px; color: var(--text3); margin-top: 4px; }
 
+  /* ---- Actions ---- */
   .actions { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
   .actions button {
-    padding: 8px 18px; border: 1px solid #dcdfe6; border-radius: 6px;
-    background: #fff; cursor: pointer; font-size: 13px; color: #606266;
+    padding: 8px 18px; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--button-bg); cursor: pointer; font-size: 13px; color: var(--button-text);
     transition: all 0.15s;
   }
-  .actions button:hover { color: #409eff; border-color: #409eff; }
-  .actions button.primary { background: #409eff; color: #fff; border-color: #409eff; }
-  .actions button.primary:hover { background: #337ecc; }
-  .actions button.danger:hover { color: #f56c6c; border-color: #f56c6c; }
-  #fileCount { font-size: 13px; color: #999; margin-left: auto; }
+  .actions button:hover { color: var(--primary); border-color: var(--primary); }
+  .actions button.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .actions button.primary:hover { background: var(--primary-hover); }
+  .actions button.danger { color: var(--button-text); }
+  .actions button.danger:hover { color: var(--danger); border-color: var(--danger); }
+  #fileCount { font-size: 13px; color: var(--text4); margin-left: auto; }
 
+  /* ---- Control panel ---- */
   #controlPanel {
-    display: none; background: #fff; border-radius: 8px; padding: 14px 18px;
-    margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    display: none; background: var(--surface); border-radius: 8px; padding: 14px 18px;
+    margin-bottom: 12px; box-shadow: 0 1px 4px var(--shadow);
   }
   #controlPanel .row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-  #controlPanel label { font-size: 13px; color: #555; white-space: nowrap; }
-  #controlPanel input[type="radio"] { accent-color: #409eff; margin-right: 4px; }
-  #controlPanel input[type="range"] { width: 120px; accent-color: #409eff; }
+  #controlPanel label { font-size: 13px; color: var(--text2); white-space: nowrap; }
+  #controlPanel input[type="radio"] { accent-color: var(--radio-accent); margin-right: 4px; }
+  #controlPanel input[type="range"] { width: 100px; accent-color: var(--radio-accent); }
   #controlPanel input[type="number"] {
-    width: 64px; padding: 3px 6px; border: 1px solid #dcdfe6; border-radius: 4px;
-    font-size: 13px; text-align: center;
+    width: 56px; padding: 3px 6px; border: 1px solid var(--border); border-radius: 4px;
+    font-size: 13px; text-align: center; background: var(--input-bg); color: var(--text);
   }
-  #trendSettings { display: flex; align-items: center; gap: 12px; margin-left: 20px; flex-wrap: wrap; }
+  #controlPanel select {
+    padding: 3px 6px; border: 1px solid var(--border); border-radius: 4px;
+    font-size: 13px; background: var(--input-bg); color: var(--text);
+  }
+  #trendSettings { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
   #trendSettings.disabled { opacity: 0.4; pointer-events: none; }
-  #modeHint { font-size: 12px; color: #909399; margin-top: 6px; }
-  .divider { width: 1px; height: 20px; background: #e0e0e0; }
-  .warn-badge { background: #fef0f0; color: #e6a23c; font-size: 12px; padding: 2px 8px; border-radius: 3px; margin-left: 8px; }
+  #modeHint { font-size: 12px; color: var(--text4); margin-top: 6px; }
+  .divider { width: 1px; height: 20px; background: var(--divider); }
 
+  /* ---- Meta bar ---- */
+  #metaBar {
+    display: none; background: var(--surface); border-radius: 8px; padding: 8px 14px;
+    margin-bottom: 12px; font-size: 12px; color: var(--text4); box-shadow: 0 1px 4px var(--shadow);
+  }
+  #metaBar .meta-item { display: inline-block; margin-right: 14px; }
+  #metaBar .meta-key { color: var(--text3); }
+  #metaBar .meta-val { color: var(--text); font-weight: 500; }
+
+  /* ---- 统计表格区域 ---- */
+  /* 默认隐藏，加载数据并计算出统计结果后再显示 */
   #statsArea { display: none; margin-bottom: 12px; }
-  #statsArea table { border-collapse: collapse; width: 100%; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); font-size: 13px; }
-  #statsArea td, #statsArea th { padding: 7px 14px; text-align: right; border-bottom: 1px solid #eee; }
-  #statsArea th { background: #fafafa; color: #666; font-weight: 600; text-align: center; }
+  /* 统计表整体样式：合并边框、铺满宽度、圆角卡片、轻微阴影 */
+  #statsArea table { border-collapse: collapse; width: 100%; background: var(--surface); border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px var(--shadow); font-size: 13px; }
+  /* 单元格：内边距、数值列右对齐、底部分隔线 */
+  #statsArea td, #statsArea th { padding: 7px 12px; text-align: right; border-bottom: 1px solid var(--border2); color: var(--text); }
+  /* 表头行：略深背景、居中、加粗 */
+  #statsArea th { background: var(--surface2); color: var(--text2); font-weight: 600; text-align: center; }
+  /* 第一列（通常是通道/曲线名称）左对齐，便于阅读文字 */
   #statsArea td:first-child, #statsArea th:first-child { text-align: left; }
+  /* 图例色块：与曲线颜色对应的小方块 */
   .swatch { display: inline-block; width: 11px; height: 11px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+  /* 系统稳定：绿色文字 */
+  .stable { color: #67c23a; }
+  /* 系统不稳定：红色文字（使用主题危险色变量） */
+  .unstable { color: var(--danger); }
 
+  /* ---- Chart ---- */
   #chartArea { display: none; }
-  #chart { width: 100%; height: 72vh; background: #fff; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  #chart { width: 100%; height: 72vh; background: var(--chart-bg); border-radius: 8px; box-shadow: 0 1px 4px var(--shadow); }
 
-  #status { font-size: 13px; color: #999; margin-bottom: 8px; min-height: 20px; }
-  #status.error { color: #f56c6c; }
-  #status.warn { color: #e6a23c; }
+  /* ---- Status ---- */
+  #status { font-size: 13px; color: var(--text4); margin-bottom: 8px; min-height: 20px; }
+  #status.error { color: var(--danger); }
+  #status.warn { color: var(--warning); }
 
-  #fileList { font-size: 13px; color: #666; margin-bottom: 12px; display: none; }
+  /* ---- File list ---- */
+  #fileList { font-size: 13px; color: var(--text2); margin-bottom: 12px; display: none; }
   #fileList .group { margin-bottom: 6px; }
-  #fileList .group-label { font-weight: 600; color: #333; }
-  #fileList .file-item { display: inline-block; background: #e8f4fd; color: #409eff; padding: 2px 8px; border-radius: 3px; margin: 2px 4px 2px 0; font-size: 12px; }
-  #fileList .file-skipped { background: #fef0f0; color: #e6a23c; }
+  #fileList .group-label { font-weight: 600; color: var(--text); }
+  #fileList .file-item { display: inline-block; background: var(--tag-bg); color: var(--primary); padding: 2px 8px; border-radius: 3px; margin: 2px 4px 2px 0; font-size: 12px; }
+  #fileList .file-skipped { background: var(--danger-bg); color: var(--warning); }
 </style>
 </head>
 <body>
 <div class="container">
 
-<h1>系统力效分析工具</h1>
+<div class="header">
+  <h1>系统力效分析工具</h1>
+  <button id="themeToggle" onclick="toggleTheme()" title="切换深浅色主题">🌙</button>
+</div>
 <p class="subtitle">拖入 MET-V6 测试台数据文件，自动按日期分组并生成趋势对比图。支持 UTF-8 / GBK 编码，兼容 .csv、.et 等格式。</p>
 
 <div id="dropZone" onclick="document.getElementById('fileInput').click()">
@@ -102,6 +213,9 @@
     <label><input type="radio" name="mode" value="raw" onchange="onModeChange()"> 原始数据</label>
     <label><input type="radio" name="mode" value="trend" onchange="onModeChange()" checked> 趋势图</label>
     <span class="divider"></span>
+    <label>指标:</label>
+    <select id="metricSelect" onchange="onMetricChange()"></select>
+    <span class="divider"></span>
     <div id="trendSettings">
       <label>每桶点数:</label>
       <input type="range" id="bucketSize" min="50" max="2000" value="400" step="10" oninput="onTrendParamChange()">
@@ -111,9 +225,11 @@
       <input type="number" id="smoothWinNum" value="21" min="3" max="101" step="2" onchange="onTrendParamChange()">
     </div>
   </div>
+  <div style="font-size:11px;color:var(--text4);margin-top:6px">拖拽图表下方滑块选择分析范围 · 双击图表重置全量</div>
   <div id="modeHint"></div>
 </div>
 
+<div id="metaBar"></div>
 <div id="statsArea"></div>
 <div id="chartArea"><div id="chart"></div></div>
 
@@ -123,6 +239,43 @@
 // ---- State ----
 let allFileData = [];
 let lastSeriesData = null;
+let availableMetrics = [];
+let rangeDebounce = null;
+
+// ---- Theme ----
+function getTheme() { return document.documentElement.getAttribute('data-theme') || 'dark'; }
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('themeToggle');
+  btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+  btn.title = theme === 'dark' ? '切换到浅色主题' : '切换到深色主题';
+}
+function toggleTheme() {
+  const next = getTheme() === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  localStorage.setItem('sys-theme', next);
+  if (lastSeriesData) renderChart(lastSeriesData);
+}
+(function initTheme() {
+  const saved = localStorage.getItem('sys-theme');
+  applyTheme(saved || 'dark');
+})();
+
+function getChartLayout(globalMin, globalMax, yPad, yTitle) {
+  const dark = getTheme() === 'dark';
+  return {
+    xaxis: { title: '帧序号', gridcolor: dark ? '#2a2a48' : '#eee', showgrid: true, zeroline: false, color: dark ? '#8888a8' : '#444',
+      rangeslider: { visible: true, thickness: 0.06, bgcolor: dark ? 'rgba(26,26,46,0.5)' : 'rgba(0,0,0,0.04)' } },
+    yaxis: { title: yTitle || '系统力效 (g/W)', gridcolor: dark ? '#2a2a48' : '#eee', showgrid: true,
+      range: [(globalMin - yPad).toFixed(4), (globalMax + yPad).toFixed(4)], color: dark ? '#8888a8' : '#444' },
+    margin: { l: 60, r: 30, t: 20, b: 50 },
+    paper_bgcolor: dark ? '#1a1a2e' : '#fff',
+    plot_bgcolor: dark ? '#1a1a2e' : '#fff',
+    font: { color: dark ? '#b0b0c8' : '#444' },
+    legend: { x: 0.01, y: 0.99, bgcolor: dark ? 'rgba(26,26,46,0.92)' : 'rgba(255,255,255,0.85)', bordercolor: dark ? '#3a3a60' : '#ddd', borderwidth: 1, font: { color: dark ? '#b0b0c8' : '#444' } },
+    hovermode: 'x unified'
+  };
+}
 
 // ---- Constants ----
 const PALETTE = [
@@ -132,6 +285,17 @@ const PALETTE = [
 ];
 
 const RAW_MODE_THRESHOLD = 5000;
+
+// ---- Math helpers ----
+function stdDev(values, mean) {
+  if (values.length < 2) return 0;
+  let sumSq = 0;
+  for (let i = 0; i < values.length; i++) {
+    const d = values[i] - mean;
+    sumSq += d * d;
+  }
+  return Math.sqrt(sumSq / (values.length - 1));
+}
 
 // ---- Drop zone ----
 const dropZone = document.getElementById('dropZone');
@@ -160,10 +324,8 @@ function decodeText(buffer, encoding) {
 }
 
 function hasHeaderGarbled(text) {
-  // Scan only the first 30 lines where Chinese metadata lives
   const headerSample = text.split('\n').slice(0, 30).join('\n');
   const replacementCount = (headerSample.match(/�/g) || []).length;
-  // Header area is ~30 lines × ~50 chars = ~1500 chars. If >3 replacements, likely garbled.
   return replacementCount > 3;
 }
 
@@ -172,20 +334,14 @@ function readFileAutoEncoding(file) {
     const reader = new FileReader();
     reader.onload = function(e) {
       const buffer = e.target.result;
-
-      // Try UTF-8 first
       let text = decodeText(buffer, 'utf-8');
       if (text !== null && !hasHeaderGarbled(text)) {
         resolve(text); return;
       }
-
-      // UTF-8 looks garbled — try GBK
       const gbkText = decodeText(buffer, 'gbk');
       if (gbkText !== null) {
         resolve(gbkText); return;
       }
-
-      // Fallback: return whatever UTF-8 gave us
       resolve(text || '');
     };
     reader.onerror = reject;
@@ -193,11 +349,188 @@ function readFileAutoEncoding(file) {
   });
 }
 
+// ---- Metadata extraction ----
+function parseMetadata(text) {
+  const meta = {};
+  const lines = text.split('\n');
+  for (let i = 0; i < Math.min(lines.length, 11); i++) {
+    const line = lines[i].trim();
+    if (!line || line.startsWith('---')) continue;
+    const parts = line.split(',');
+    for (let j = 0; j < parts.length - 1; j += 2) {
+      let key = parts[j].trim().replace(/[：:]$/, '').replace(/\?/g, '');
+      let val = parts[j + 1] ? parts[j + 1].trim() : '';
+      if (key && val) meta[key] = val;
+    }
+  }
+  return meta;
+}
+
+// ---- CSV parsing (multi-column) ----
+function shouldNegateColumn(name, values) {
+  // For physics columns (thrust, torque, efficiency types), negate if values are consistently negative
+  const negatePatterns = ['拉力', '扭矩', '力效', '轴功率'];
+  if (!negatePatterns.some(p => name.includes(p))) return false;
+  const sample = values.slice(0, Math.min(values.length, 100));
+  if (sample.length === 0) return false;
+  let negCount = 0;
+  for (const v of sample) { if (v < 0) negCount++; }
+  return negCount / sample.length > 0.8;
+}
+
+function parseCSV(text, fileName) {
+  const lines = text.split('\n');
+  if (lines.length < 13) return { columns: {}, metadata: {}, error: '行数不足' };
+
+  // Find data header row
+  let headerRowIdx = -1;
+  for (let i = 0; i < Math.min(lines.length, 20); i++) {
+    if (lines[i].includes('帧数') || lines[i].includes('系統力效') || lines[i].includes('系统力效')) {
+      headerRowIdx = i; break;
+    }
+  }
+  if (headerRowIdx < 0) {
+    for (const idx of [11, 10, 12]) {
+      if (idx < lines.length && lines[idx].includes(',')) { headerRowIdx = idx; break; }
+    }
+  }
+  if (headerRowIdx < 0) return { columns: {}, metadata: {}, error: '未找到数据表头' };
+
+  // Parse headers
+  const rawHeaders = lines[headerRowIdx].split(',');
+  const headers = rawHeaders.map(h => h.trim().replace(/\?/g, '•')).filter(h => h.length > 0);
+  if (headers.length === 0) return { columns: {}, metadata: {}, error: '表头为空' };
+
+  // Initialize column arrays
+  const colArrays = {};
+  for (const h of headers) colArrays[h] = [];
+
+  // Parse data rows
+  const dataStartRow = headerRowIdx + 1;
+  for (let i = dataStartRow; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const cols = line.split(',');
+    for (let j = 0; j < Math.min(cols.length, headers.length); j++) {
+      const val = parseFloat(cols[j]);
+      if (!isNaN(val)) colArrays[headers[j]].push(val);
+    }
+  }
+
+  // Keep only columns with data
+  const columns = {};
+  for (const [name, vals] of Object.entries(colArrays)) {
+    if (vals.length > 0) {
+      columns[name] = vals;
+    }
+  }
+
+  if (Object.keys(columns).length === 0) {
+    return { columns: {}, metadata: {}, error: '未能提取到数值列' };
+  }
+
+  // Negate physics columns that are consistently negative
+  for (const [name, vals] of Object.entries(columns)) {
+    if (shouldNegateColumn(name, vals)) {
+      for (let i = 0; i < vals.length; i++) vals[i] = -vals[i];
+    }
+  }
+
+  // Extract metadata from header
+  const metadata = parseMetadata(text);
+
+  return { columns, metadata, error: null };
+}
+
+// ---- Date extraction (multi-strategy) ----
+function extractDateFromContent(text) {
+  const m = text.match(/日志号[:\s，,]*(\d{4})(\d{2})(\d{2})\d{6}/);
+  if (m) {
+    const [, yy, mm, dd] = m;
+    return { key: `${yy}${mm}${dd}`, label: `${yy}年${mm}月${dd}日` };
+  }
+  return null;
+}
+
+function extractDate(filename) {
+  let m = filename.match(/(\d{4})(\d{2})(\d{2})\d{6,}/);
+  if (m) {
+    const [, yy, mm, dd] = m;
+    const mi = parseInt(mm, 10), di = parseInt(dd, 10);
+    if (mi >= 1 && mi <= 12 && di >= 1 && di <= 31) {
+      return { key: `${yy}${mm}${dd}`, label: `${yy}年${mm}月${dd}日` };
+    }
+  }
+
+  m = filename.match(/(\d{2})(\d{2})(\d{2})[_-](\d{2})(\d{2})(\d{2})/);
+  if (m) {
+    const [, yy, mm, dd] = m;
+    return { key: `20${yy}${mm}${dd}`, label: `20${yy}年${mm}月${dd}日` };
+  }
+
+  m = filename.match(/(\d{4})(\d{2})(\d{2})/);
+  if (m) {
+    const [, yy, mm, dd] = m;
+    const mi = parseInt(mm, 10), di = parseInt(dd, 10);
+    if (mi >= 1 && mi <= 12 && di >= 1 && di <= 31) {
+      return { key: `${yy}${mm}${dd}`, label: `${yy}年${mm}月${dd}日` };
+    }
+  }
+
+  m = filename.match(/(\d{6})/);
+  if (m) {
+    const d = m[1];
+    const mi = parseInt(d.slice(2, 4), 10), di = parseInt(d.slice(4, 6), 10);
+    if (mi >= 1 && mi <= 12 && di >= 1 && di <= 31) {
+      return { key: `20${d}`, label: `20${d.slice(0,2)}年${d.slice(2,4)}月${d.slice(4,6)}日` };
+    }
+  }
+
+  const stem = filename.replace(/\.[^.]+$/, '').replace(/^.*[\\/]/, '');
+  return { key: stem, label: stem };
+}
+
+// ---- Metric list management ----
+function updateMetricSelect() {
+  const sel = document.getElementById('metricSelect');
+  const currentVal = sel.value;
+
+  // Collect all metric names from loaded files
+  const metricSet = new Set();
+  for (const f of allFileData) {
+    for (const key of Object.keys(f.data.columns)) {
+      metricSet.add(key);
+    }
+  }
+  availableMetrics = [...metricSet].sort();
+
+  sel.innerHTML = '';
+  for (const m of availableMetrics) {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = m;
+    sel.appendChild(opt);
+  }
+
+  // Restore previous selection or default to 系统力效
+  if (availableMetrics.includes(currentVal)) {
+    sel.value = currentVal;
+  } else if (availableMetrics.includes('系统力效-g/W')) {
+    sel.value = '系统力效-g/W';
+  } else if (availableMetrics.length > 0) {
+    sel.value = availableMetrics[0];
+  }
+}
+
+function getSelectedMetric() {
+  const sel = document.getElementById('metricSelect');
+  return sel.value || (availableMetrics[0] || '系统力效-g/W');
+}
+
 // ---- File handling ----
 async function handleFiles(fileList) {
   if (fileList.length === 0) return;
 
-  // Dedup: skip files already loaded (by name)
   const existingNames = new Set(allFileData.map(f => f.name));
   const newFiles = [];
   const skippedDup = [];
@@ -224,23 +557,21 @@ async function handleFiles(fileList) {
   for (const file of newFiles) {
     try {
       const text = await readFileAutoEncoding(file);
-      const raw = parseCSV(text, file.name);
-      if (raw.length === 0) {
-        fileErrors.push({ name: file.name, reason: '未能提取到系统力效数据，可能是列名不匹配或文件格式不同' });
+      const result = parseCSV(text, file.name);
+      if (result.error) {
+        fileErrors.push({ name: file.name, reason: result.error });
         completed++;
         setStatus(`已读取: ${completed}/${newFiles.length} (${fileErrors.length} 个异常)`);
         continue;
       }
-      // Also try to extract date from file content as fallback
       const dateFromContent = extractDateFromContent(text);
       const dateFromName = extractDate(file.name);
-      // Prefer content date (日志号) over filename date, but only if valid
       const dateInfo = dateFromContent || dateFromName;
       allFileData.push({
         name: file.name,
         dateKey: dateInfo.key,
         dateLabel: dateInfo.label,
-        raw: raw,
+        data: { columns: result.columns, metadata: result.metadata },
       });
     } catch (err) {
       console.error(`Failed to read ${file.name}:`, err);
@@ -250,7 +581,6 @@ async function handleFiles(fileList) {
     setStatus(`已读取: ${completed}/${newFiles.length}${fileErrors.length > 0 ? ` (${fileErrors.length} 个异常)` : ''}`);
   }
 
-  // Show skipped file details
   if (fileErrors.length > 0) {
     const detail = fileErrors.map(e => `${e.name}: ${e.reason}`).join('; ');
     setStatus(`警告: ${fileErrors.length}/${newFiles.length} 个文件未能解析 — ${detail}`, 'warn');
@@ -258,118 +588,24 @@ async function handleFiles(fileList) {
     setStatus('未能读取到任何有效数据，请检查文件格式', true);
     return;
   } else {
-    const totalPts = allFileData.reduce((s,f) => s + f.raw.length, 0);
+    const totalPts = allFileData.reduce((s, f) => s + totalRows(f.data), 0);
     setStatus(`读取完成，共 ${allFileData.length} 个文件 (${totalPts.toLocaleString()} 条数据)`);
   }
 
-  // Update UI immediately — show file list and control panel
+  updateMetricSelect();
   updateFileList();
+  showMetaBar();
 
-  // Always show the control panel so user sees mode selection before refresh
-  const totalPts = allFileData.reduce((s,f) => s + f.raw.length, 0);
   document.getElementById('controlPanel').style.display = 'block';
+  const totalPts = allFileData.reduce((s, f) => s + totalRows(f.data), 0);
   suggestMode(totalPts);
-
-  // Auto-refresh chart if we already had one
-  if (lastSeriesData || allFileData.length > 0) {
-    // Don't auto-render; let user click "refresh" to confirm settings
-  }
 }
 
-function parseCSV(text, fileName) {
-  const lines = text.split('\n');
-  if (lines.length < 13) return [];
-
-  // Find data header row
-  let headerRowIdx = -1;
-  for (let i = 0; i < Math.min(lines.length, 20); i++) {
-    if (lines[i].includes('帧数') || lines[i].includes('系統力效') || lines[i].includes('系统力效')) {
-      headerRowIdx = i; break;
-    }
-  }
-  if (headerRowIdx < 0) {
-    for (const idx of [11, 10, 12]) {
-      if (idx < lines.length && lines[idx].includes(',')) { headerRowIdx = idx; break; }
-    }
-  }
-  if (headerRowIdx < 0) return [];
-
-  // Parse headers — trim, filter empty, normalize bullet
-  const rawHeaders = lines[headerRowIdx].split(',');
-  const headers = rawHeaders.map(h => h.trim().replace(/\?/g, '•')).filter(h => h.length > 0);
-
-  // Find column: exact → fuzzy → position fallback
-  let colIdx = headers.findIndex(h => h === '系统力效-g/W');
-  if (colIdx < 0) colIdx = headers.findIndex(h => h.includes('系统力效') || h.includes('系統力效'));
-  if (colIdx < 0 && headers.length >= 13) colIdx = 12;
-  if (colIdx < 0) return [];
-
-  const dataStartRow = headerRowIdx + 1;
-  const raw = [];
-  for (let i = dataStartRow; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    const cols = line.split(',');
-    if (cols.length > colIdx) {
-      const val = parseFloat(cols[colIdx]);
-      if (!isNaN(val)) raw.push(val);
-    }
-  }
-  return raw;
-}
-
-// ---- Date extraction (multi-strategy) ----
-function extractDateFromContent(text) {
-  // Try to find 日志号: YYYYMMDDHHMMSS in the file header
-  const m = text.match(/日志号[:\s，,]*(\d{4})(\d{2})(\d{2})\d{6}/);
-  if (m) {
-    const [, yy, mm, dd] = m;
-    return { key: `${yy}${mm}${dd}`, label: `${yy}年${mm}月${dd}日` };
-  }
-  return null;
-}
-
-function extractDate(filename) {
-  // Strategy 1: YYYYMMDD (8-digit date from backup timestamps, most reliable)
-  let m = filename.match(/(\d{4})(\d{2})(\d{2})\d{6,}/);
-  if (m) {
-    const [, yy, mm, dd] = m;
-    const mi = parseInt(mm, 10), di = parseInt(dd, 10);
-    if (mi >= 1 && mi <= 12 && di >= 1 && di <= 31) {
-      return { key: `${yy}${mm}${dd}`, label: `${yy}年${mm}月${dd}日` };
-    }
-  }
-
-  // Strategy 2: YYMMDD_HHMMSS (standard MET-V6 export name)
-  m = filename.match(/(\d{2})(\d{2})(\d{2})[_-](\d{2})(\d{2})(\d{2})/);
-  if (m) {
-    const [, yy, mm, dd] = m;
-    return { key: `20${yy}${mm}${dd}`, label: `20${yy}年${mm}月${dd}日` };
-  }
-
-  // Strategy 3: standalone 8-digit YYYYMMDD
-  m = filename.match(/(\d{4})(\d{2})(\d{2})/);
-  if (m) {
-    const [, yy, mm, dd] = m;
-    const mi = parseInt(mm, 10), di = parseInt(dd, 10);
-    if (mi >= 1 && mi <= 12 && di >= 1 && di <= 31) {
-      return { key: `${yy}${mm}${dd}`, label: `${yy}年${mm}月${dd}日` };
-    }
-  }
-
-  // Strategy 4: standalone 6-digit YYMMDD (validate month/day range)
-  m = filename.match(/(\d{6})/);
-  if (m) {
-    const d = m[1];
-    const mi = parseInt(d.slice(2, 4), 10), di = parseInt(d.slice(4, 6), 10);
-    if (mi >= 1 && mi <= 12 && di >= 1 && di <= 31) {
-      return { key: `20${d}`, label: `20${d.slice(0,2)}年${d.slice(2,4)}月${d.slice(4,6)}日` };
-    }
-  }
-
-  // Strategy 5: fallback
-  const stem = filename.replace(/\.[^.]+$/, '').replace(/^.*[\\/]/, '');
-  return { key: stem, label: stem };
+function totalRows(data) {
+  if (!data || !data.columns) return 0;
+  const keys = Object.keys(data.columns);
+  if (keys.length === 0) return 0;
+  return data.columns[keys[0]].length;
 }
 
 function updateFileList() {
@@ -388,8 +624,36 @@ function updateFileList() {
     html += `</div>`;
   }
   div.innerHTML = html;
+  const totalPts = allFileData.reduce((s, f) => s + totalRows(f.data), 0);
   document.getElementById('fileCount').textContent =
-    `${allFileData.length} 个文件 · ${allFileData.reduce((s,f)=>s+f.raw.length,0).toLocaleString()} 条数据`;
+    `${allFileData.length} 个文件 · ${totalPts.toLocaleString()} 条数据`;
+}
+
+function showMetaBar() {
+  const bar = document.getElementById('metaBar');
+  // Show metadata from the first file that has it
+  let meta = null;
+  for (const f of allFileData) {
+    if (f.data.metadata && Object.keys(f.data.metadata).length > 0) {
+      meta = f.data.metadata;
+      break;
+    }
+  }
+  if (!meta) { bar.style.display = 'none'; return; }
+
+  const keyKeys = ['测试台型号', '测试台编号', '环境温度', '环境湿度', '大气压', '空气密度', '日志记录速率', '测试时间', '电机型号', '螺旋桨型号'];
+  const parts = [];
+  for (const k of keyKeys) {
+    if (meta[k]) {
+      parts.push(`<span class="meta-item"><span class="meta-key">${k}:</span> <span class="meta-val">${meta[k]}</span></span>`);
+    }
+  }
+  if (parts.length > 0) {
+    bar.innerHTML = parts.join('');
+    bar.style.display = 'block';
+  } else {
+    bar.style.display = 'none';
+  }
 }
 
 // ---- Mode suggestion ----
@@ -410,6 +674,10 @@ function onModeChange() {
   const isTrend = document.querySelector('input[name="mode"]:checked').value === 'trend';
   document.getElementById('trendSettings').classList.toggle('disabled', !isTrend);
   if (lastSeriesData) renderChart(lastSeriesData);
+}
+
+function onMetricChange() {
+  if (allFileData.length > 0) processAll();
 }
 
 function onTrendParamChange() {
@@ -437,11 +705,15 @@ function processAll() {
   setStatus('正在处理...');
   document.getElementById('controlPanel').style.display = 'block';
 
-  // Group by date
+  const metricName = getSelectedMetric();
+
+  // Group by date — concatenate the selected metric column from each file
   const groups = new Map();
   for (const f of allFileData) {
-    if (!groups.has(f.dateKey)) groups.set(f.dateKey, { label: f.dateLabel, raw: [] });
-    for (const v of f.raw) groups.get(f.dateKey).raw.push(v);
+    const col = f.data.columns[metricName];
+    if (!col || col.length === 0) continue;
+    if (!groups.has(f.dateKey)) groups.set(f.dateKey, { label: f.dateLabel, allValues: [] });
+    for (const v of col) groups.get(f.dateKey).allValues.push(v);
   }
 
   const groupEntries = [...groups.entries()].sort();
@@ -452,40 +724,43 @@ function processAll() {
 
   for (let gi = 0; gi < groupEntries.length; gi++) {
     const [key, grp] = groupEntries[gi];
-    const raw = grp.raw;
-    if (raw.length === 0) continue;
+    const allVals = grp.allValues;
+    if (allVals.length === 0) continue;
 
     let minV = Infinity, maxV = -Infinity, sumV = 0;
-    for (const v of raw) { if (v < minV) minV = v; if (v > maxV) maxV = v; sumV += v; }
+    for (const v of allVals) { if (v < minV) minV = v; if (v > maxV) maxV = v; sumV += v; }
+    const meanV = sumV / allVals.length;
+    const stdV = stdDev(allVals, meanV);
 
     const entry = {
       name: grp.label,
       color: PALETTE[gi % PALETTE.length],
-      raw: raw,
-      count: raw.length,
-      min: minV, max: maxV, mean: sumV / raw.length,
+      raw: allVals,
+      rawFull: allVals,
+      count: allVals.length,
+      min: minV, max: maxV, mean: meanV, std: stdV,
       rawX: null, rawY: null,
       bktX: null, bktY: null, smoothY: null,
     };
 
-    if (!isTrend || raw.length <= bucketSize) {
-      if (raw.length > 100000) {
-        const step = Math.ceil(raw.length / 80000);
+    if (!isTrend || allVals.length <= bucketSize) {
+      if (allVals.length > 100000) {
+        const step = Math.ceil(allVals.length / 80000);
         entry.rawX = []; entry.rawY = [];
-        for (let i = 0; i < raw.length; i += step) {
+        for (let i = 0; i < allVals.length; i += step) {
           entry.rawX.push(i + 1);
-          entry.rawY.push(raw[i]);
+          entry.rawY.push(allVals[i]);
         }
       } else {
-        entry.rawX = raw.map((_, i) => i + 1);
-        entry.rawY = raw;
+        entry.rawX = allVals.map((_, i) => i + 1);
+        entry.rawY = allVals;
       }
     } else {
       const bktX = [], bktY = [];
-      for (let i = 0; i < raw.length; i += bucketSize) {
-        const end = Math.min(i + bucketSize, raw.length);
+      for (let i = 0; i < allVals.length; i += bucketSize) {
+        const end = Math.min(i + bucketSize, allVals.length);
         let s = 0;
-        for (let j = i; j < end; j++) s += raw[j];
+        for (let j = i; j < end; j++) s += allVals[j];
         bktX.push(i + Math.floor((end - i) / 2));
         bktY.push(s / (end - i));
       }
@@ -506,28 +781,16 @@ function processAll() {
   }
 
   if (seriesData.length === 0) {
-    setStatus('未能提取有效数据', true); return;
+    setStatus(`指标 "${metricName}" 未能提取有效数据`, true); return;
   }
 
   lastSeriesData = seriesData;
 
   const globalMin = Math.min(...seriesData.map(s => s.min));
   const globalMax = Math.max(...seriesData.map(s => s.max));
-  const yPad = Math.max((globalMax - globalMin) * 0.1, 0.05);
+  const yPad = Math.max((globalMax - globalMin) * 0.1, Math.abs(globalMax) * 0.02, 0.001);
 
-  // Stats table
-  const statsArea = document.getElementById('statsArea');
-  statsArea.style.display = 'block';
-  statsArea.innerHTML = `<table>
-    <tr><th></th><th>日期</th><th>数据量</th><th>均值 (g/W)</th><th>范围 (g/W)</th></tr>
-    ${seriesData.map(s => `<tr>
-      <td><span class="swatch" style="background:${s.color}"></span></td>
-      <td>${s.name}</td>
-      <td>${s.count.toLocaleString()}</td>
-      <td>${s.mean.toFixed(3)}</td>
-      <td>${s.min.toFixed(2)} ~ ${s.max.toFixed(2)}</td>
-    </tr>`).join('')}
-  </table>`;
+  buildStatsTable(seriesData, seriesData);
 
   // Chart
   document.getElementById('chartArea').style.display = 'block';
@@ -541,7 +804,7 @@ function processAll() {
         mode: 'lines',
         line: { color: s.color, width: 1.2 },
         name: s.name,
-        hovertemplate: `帧: %{x}<br>${s.name}: %{y:.3f} g/W<extra></extra>`
+        hovertemplate: `帧: %{x}<br>${s.name}: %{y:.4f}<extra></extra>`
       });
     } else {
       traces.push({
@@ -549,48 +812,69 @@ function processAll() {
         type: 'scatter', mode: 'lines',
         line: { color: s.color, width: 0.6 },
         opacity: 0.3, showlegend: false,
-        hovertemplate: `帧: %{x}<br>${s.name} 均值: %{y:.3f} g/W<extra></extra>`
+        hovertemplate: `帧: %{x}<br>${s.name} 均值: %{y:.4f}<extra></extra>`
       });
       traces.push({
         x: s.bktX, y: s.smoothY,
         type: 'scatter', mode: 'lines',
         line: { color: s.color, width: 2.8 },
         name: s.name,
-        hovertemplate: `帧: %{x}<br>${s.name} 趋势: %{y:.3f} g/W<extra></extra>`
+        hovertemplate: `帧: %{x}<br>${s.name} 趋势: %{y:.4f}<extra></extra>`
       });
     }
   }
 
-  const layout = {
-    xaxis: { title: '帧序号', gridcolor: '#eee', showgrid: true, zeroline: false },
-    yaxis: { title: '系统力效 (g/W)', gridcolor: '#eee', showgrid: true,
-      range: [(globalMin - yPad).toFixed(2), (globalMax + yPad).toFixed(2)] },
-    margin: { l: 60, r: 30, t: 20, b: 50 },
-    paper_bgcolor: '#fff', plot_bgcolor: '#fff',
-    legend: { x: 0.01, y: 0.99, bgcolor: 'rgba(255,255,255,0.85)', bordercolor: '#ddd', borderwidth: 1 },
-    hovermode: 'x unified'
-  };
-
-  Plotly.newPlot('chart', traces, layout, { responsive: true, displaylogo: false, scrollZoom: true });
-  const totalPts = seriesData.reduce((s, x) => s + x.count, 0);
+  const layout = getChartLayout(globalMin, globalMax, yPad, metricName);
+  const chartEl = document.getElementById('chart');
+  Plotly.newPlot('chart', traces, layout, { responsive: true, displaylogo: false, scrollZoom: true }).then(function() {
+    // Attach rangeslider relayout handler
+    chartEl.removeAllListeners && chartEl.removeAllListeners('plotly_relayout');
+    chartEl.on('plotly_relayout', function(eventData) {
+      if (!eventData || !lastSeriesData) return;
+      // Detect double-click reset (autorange)
+      if (eventData['xaxis.autorange'] === true || eventData.autosize === true) {
+        buildStatsTable(lastSeriesData, lastSeriesData);
+        setStatus('分析范围已重置为全量');
+        return;
+      }
+      // Get x-axis range from event
+      let xMin, xMax;
+      if (eventData['xaxis.range']) {
+        xMin = eventData['xaxis.range'][0];
+        xMax = eventData['xaxis.range'][1];
+      } else if (eventData['xaxis.range[0]'] !== undefined) {
+        xMin = eventData['xaxis.range[0]'];
+        xMax = eventData['xaxis.range[1]'];
+      } else {
+        return;
+      }
+      clearTimeout(rangeDebounce);
+      rangeDebounce = setTimeout(function() {
+        updateStatsForRange(xMin, xMax, lastSeriesData);
+      }, 250);
+    });
+  });
   const modeLabel = traces[0].type === 'scattergl' ? '原始数据' : '趋势图';
-  setStatus(`图表已生成 (${modeLabel}, ${seriesData.length} 组, ${totalPts.toLocaleString()} 点)`);
+  setStatus(`图表已生成 (${modeLabel}, ${metricName}, ${seriesData.length} 组)`);
 }
 
 function renderChart(seriesData) {
+  const metricName = getSelectedMetric();
   const isTrend = document.querySelector('input[name="mode"]:checked').value === 'trend';
   const bucketSize = parseInt(document.getElementById('bucketSizeNum').value) || 400;
   const smoothWin = parseInt(document.getElementById('smoothWinNum').value) || 21;
 
   const processed = seriesData.map(s => {
     const entry = { ...s };
-    if (isTrend && s.count > bucketSize) {
-      const raw = s.raw;
+    const allVals = s.rawFull || s.raw;
+    if (allVals.length === 0) { entry.rawX = []; entry.rawY = []; return entry; }
+
+    if (isTrend && allVals.length > bucketSize) {
       const bktX = [], bktY = [];
-      for (let i = 0; i < raw.length; i += bucketSize) {
-        const end = Math.min(i + bucketSize, raw.length);
+      for (let i = 0; i < allVals.length; i += bucketSize) {
+        const end = Math.min(i + bucketSize, allVals.length);
         let sum = 0;
-        for (let j = i; j < end; j++) sum += raw[j];
+        for (let j = i; j < end; j++) sum += allVals[j];
         bktX.push(i + Math.floor((end - i) / 2));
         bktY.push(sum / (end - i));
       }
@@ -606,14 +890,13 @@ function renderChart(seriesData) {
       entry.bktX = bktX; entry.bktY = bktY; entry.smoothY = smoothY;
       entry.rawX = null; entry.rawY = null;
     } else {
-      const raw = s.raw;
-      if (raw.length > 100000) {
-        const step = Math.ceil(raw.length / 80000);
+      if (allVals.length > 100000) {
+        const step = Math.ceil(allVals.length / 80000);
         entry.rawX = []; entry.rawY = [];
-        for (let i = 0; i < raw.length; i += step) { entry.rawX.push(i + 1); entry.rawY.push(raw[i]); }
+        for (let i = 0; i < allVals.length; i += step) { entry.rawX.push(i + 1); entry.rawY.push(allVals[i]); }
       } else {
-        entry.rawX = raw.map((_, i) => i + 1);
-        entry.rawY = raw;
+        entry.rawX = allVals.map((_, i) => i + 1);
+        entry.rawY = allVals;
       }
       entry.bktX = null; entry.bktY = null; entry.smoothY = null;
     }
@@ -622,61 +905,133 @@ function renderChart(seriesData) {
 
   const globalMin = Math.min(...processed.map(s => s.min));
   const globalMax = Math.max(...processed.map(s => s.max));
-  const yPad = Math.max((globalMax - globalMin) * 0.1, 0.05);
+  const yPad = Math.max((globalMax - globalMin) * 0.1, Math.abs(globalMax) * 0.02, 0.001);
+
+  buildStatsTable(seriesData, processed);
 
   const traces = [];
   for (const s of processed) {
-    if (s.rawX) {
+    if (s.rawX && s.rawX.length > 0) {
       traces.push({
         x: s.rawX, y: s.rawY,
         type: 'scattergl', mode: 'lines',
         line: { color: s.color, width: 1.2 },
         name: s.name,
-        hovertemplate: `帧: %{x}<br>${s.name}: %{y:.3f} g/W<extra></extra>`
+        hovertemplate: `帧: %{x}<br>${s.name}: %{y:.4f}<extra></extra>`
       });
-    } else {
+    } else if (s.bktX) {
       traces.push({
         x: s.bktX, y: s.bktY,
         type: 'scatter', mode: 'lines',
         line: { color: s.color, width: 0.6 },
         opacity: 0.3, showlegend: false,
-        hovertemplate: `帧: %{x}<br>${s.name} 均值: %{y:.3f} g/W<extra></extra>`
+        hovertemplate: `帧: %{x}<br>${s.name} 均值: %{y:.4f}<extra></extra>`
       });
       traces.push({
         x: s.bktX, y: s.smoothY,
         type: 'scatter', mode: 'lines',
         line: { color: s.color, width: 2.8 },
         name: s.name,
-        hovertemplate: `帧: %{x}<br>${s.name} 趋势: %{y:.3f} g/W<extra></extra>`
+        hovertemplate: `帧: %{x}<br>${s.name} 趋势: %{y:.4f}<extra></extra>`
       });
     }
   }
 
-  const layout = {
-    xaxis: { title: '帧序号', gridcolor: '#eee', showgrid: true, zeroline: false },
-    yaxis: { title: '系统力效 (g/W)', gridcolor: '#eee', showgrid: true,
-      range: [(globalMin - yPad).toFixed(2), (globalMax + yPad).toFixed(2)] },
-    margin: { l: 60, r: 30, t: 20, b: 50 },
-    paper_bgcolor: '#fff', plot_bgcolor: '#fff',
-    legend: { x: 0.01, y: 0.99, bgcolor: 'rgba(255,255,255,0.85)', bordercolor: '#ddd', borderwidth: 1 },
-    hovermode: 'x unified'
-  };
-
-  Plotly.newPlot('chart', traces, layout, { responsive: true, displaylogo: false, scrollZoom: true });
-  const totalPts = processed.reduce((s, x) => s + x.count, 0);
+  const layout = getChartLayout(globalMin, globalMax, yPad, metricName);
+  const chartEl = document.getElementById('chart');
+  Plotly.newPlot('chart', traces, layout, { responsive: true, displaylogo: false, scrollZoom: true }).then(function() {
+    chartEl.removeAllListeners && chartEl.removeAllListeners('plotly_relayout');
+    chartEl.on('plotly_relayout', function(eventData) {
+      if (!eventData || !lastSeriesData) return;
+      if (eventData['xaxis.autorange'] === true || eventData.autosize === true) {
+        buildStatsTable(lastSeriesData, lastSeriesData);
+        setStatus('分析范围已重置为全量');
+        return;
+      }
+      let xMin, xMax;
+      if (eventData['xaxis.range']) {
+        xMin = eventData['xaxis.range'][0];
+        xMax = eventData['xaxis.range'][1];
+      } else if (eventData['xaxis.range[0]'] !== undefined) {
+        xMin = eventData['xaxis.range[0]'];
+        xMax = eventData['xaxis.range[1]'];
+      } else {
+        return;
+      }
+      clearTimeout(rangeDebounce);
+      rangeDebounce = setTimeout(function() {
+        updateStatsForRange(xMin, xMax, lastSeriesData);
+      }, 250);
+    });
+  });
+  const totalPts = processed.reduce((s, x) => s + (x.count || 0), 0);
   const modeLabel = isTrend ? '趋势图' : '原始数据';
-  setStatus(`图表已更新 (${modeLabel}, ${processed.length} 组, ${totalPts.toLocaleString()} 点)`);
+  setStatus(`图表已更新 (${modeLabel}, ${metricName}, ${processed.length} 组, ${totalPts.toLocaleString()} 点)`);
+}
+
+function computeStats(vals) {
+  let minV = Infinity, maxV = -Infinity, sumV = 0;
+  for (const v of vals) { if (v < minV) minV = v; if (v > maxV) maxV = v; sumV += v; }
+  const meanV = sumV / vals.length;
+  return { min: minV, max: maxV, mean: meanV, std: stdDev(vals, meanV), count: vals.length };
+}
+
+function buildStatsTable(origSeries, statsSeries) {
+  const statsArea = document.getElementById('statsArea');
+  statsArea.style.display = 'block';
+  const isFiltered = origSeries.some((s, i) => s.count !== (statsSeries[i] ? statsSeries[i].count : 0));
+  statsArea.innerHTML = `<table>
+    <tr><th></th><th>日期</th><th>数据量</th>${isFiltered ? '<th>选中范围</th>' : ''}<th>均值</th><th>标准差</th><th>范围</th><th>波动率</th></tr>
+    ${origSeries.map((s, i) => {
+      const st = statsSeries[i] || s;
+      const cv = st.mean !== 0 ? (st.std / Math.abs(st.mean) * 100) : 0;
+      const cvClass = cv < 5 ? 'stable' : cv > 15 ? 'unstable' : '';
+      return `<tr>
+        <td><span class="swatch" style="background:${s.color}"></span></td>
+        <td>${s.name}</td>
+        <td>${s.count.toLocaleString()}</td>
+        ${isFiltered ? `<td>${st.count.toLocaleString()}</td>` : ''}
+        <td>${st.mean.toFixed(4)}</td>
+        <td>${st.std.toFixed(4)}</td>
+        <td>${st.min.toFixed(3)} ~ ${st.max.toFixed(3)}</td>
+        <td class="${cvClass}">${cv.toFixed(1)}%</td>
+      </tr>`;
+    }).join('')}
+  </table>`;
+}
+
+function updateStatsForRange(xMin, xMax, seriesData) {
+  const stats = seriesData.map(s => {
+    const vals = s.rawFull || s.raw;
+    const n = vals.length;
+    if (n === 0) return { count: 0, min: 0, max: 0, mean: 0, std: 0 };
+    const i0 = Math.max(0, Math.floor(xMin) - 1);
+    const i1 = Math.min(n, Math.ceil(xMax));
+    if (i0 >= i1) return { count: 0, min: 0, max: 0, mean: 0, std: 0 };
+    const slice = vals.slice(i0, i1);
+    const st = computeStats(slice);
+    st.count = slice.length;
+    return st;
+  });
+  buildStatsTable(seriesData, stats);
+  const totalInRange = stats.reduce((s, x) => s + x.count, 0);
+  setStatus(`分析范围: 帧 ${Math.floor(xMin).toLocaleString()} ~ ${Math.ceil(xMax).toLocaleString()} (${totalInRange.toLocaleString()} 点)`);
 }
 
 function clearAll() {
   allFileData = [];
   lastSeriesData = null;
+  availableMetrics = [];
+  clearTimeout(rangeDebounce);
+  rangeDebounce = null;
   document.getElementById('fileList').style.display = 'none';
   document.getElementById('fileList').innerHTML = '';
   document.getElementById('statsArea').style.display = 'none';
   document.getElementById('chartArea').style.display = 'none';
   document.getElementById('controlPanel').style.display = 'none';
+  document.getElementById('metaBar').style.display = 'none';
   document.getElementById('fileCount').textContent = '未加载文件';
+  document.getElementById('metricSelect').innerHTML = '';
   const chartEl = document.getElementById('chart');
   chartEl.innerHTML = '';
   Plotly.purge(chartEl);
