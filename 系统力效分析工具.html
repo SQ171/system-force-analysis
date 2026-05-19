@@ -312,7 +312,7 @@ function parseCSV(text, fileName) {
     const cols = line.split(',');
     if (cols.length > colIdx) {
       const val = parseFloat(cols[colIdx]);
-      if (!isNaN(val)) raw.push(val);
+      if (!isNaN(val)) raw.push(-val);
     }
   }
   return raw;
